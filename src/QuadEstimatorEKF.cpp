@@ -102,33 +102,29 @@ void QuadEstimatorEKF::UpdateFromIMU(V3F accel, V3F gyro)
   if (ekfState(6) > F_PI) ekfState(6) -= 2.f*F_PI;
   if (ekfState(6) < -F_PI) ekfState(6) += 2.f*F_PI;
      */
-     
-    
-    
+
     float phi = rollEst;
     float theta = pitchEst;
     
     Mat3x3F rot = Mat3x3F::Zeros();
+    float sec=1/cos(theta);
     rot(0,0) = 1;
     rot(0,1) = sin(phi) * tan(theta);
     rot(0,2) = cos(phi) * tan(theta);
     rot(1,1) = cos(phi);
     rot(1,2) = -sin(phi);
-    rot(2,1) = sin(phi) / cos(theta);
-    rot(2,2) = cos(phi) / cos(theta);
+    rot(2,1) = sin(phi) *sec;
+    rot(2,2) = cos(phi) *sec;
     
-    V3F angle_dot = rot * gyro;
+    V3F Euler_angle_dot = rot * gyro;
     
-    float predictedRoll = rollEst + dtIMU * angle_dot.x;
-    float predictedPitch = pitchEst + dtIMU * angle_dot.y;
-    ekfState(6) = ekfState(6) + dtIMU * angle_dot.z;
+    float predictedRoll = rollEst + dtIMU * Euler_angle_dot.x;
+    float predictedPitch = pitchEst + dtIMU * Euler_angle_dot.y;
+    ekfState(6) = ekfState(6) + dtIMU * Euler_angle_dot.z;
     
     // normalize yaw to -pi .. pi
     if (ekfState(6) > F_PI) ekfState(6) -= 2.f*F_PI;
     if (ekfState(6) < -F_PI) ekfState(6) += 2.f*F_PI;
-     
-    
-
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
   // CALCULATE UPDATE
@@ -189,17 +185,17 @@ VectorXf QuadEstimatorEKF::PredictState(VectorXf curState, float dt, V3F accel, 
   Quaternion<float> attitude = Quaternion<float>::FromEuler123_RPY(rollEst, pitchEst, curState(6));
 
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
+    // This task only use some basic physics, the dynamical model of the drone,
+    // to predict the states of the vehicle.
     predictedState(0) = curState(0) + dt * curState(3);
     predictedState(1) = curState(1) + dt * curState(4);
     predictedState(2) = curState(2) + dt * curState(5);
     
-    V3F acc_w = attitude.Rotate_BtoI(accel);
+    V3F acc_w = attitude.Rotate_BtoI(accel);  // a 3D vector
     
     predictedState(3) = curState(3) + dt * acc_w.x;
     predictedState(4) = curState(4) + dt * acc_w.y;
     predictedState(5) = curState(5) + dt * acc_w.z - dt * CONST_GRAVITY;
-
-
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
   return predictedState;
@@ -318,12 +314,9 @@ void QuadEstimatorEKF::UpdateFromGPS(V3F pos, V3F vel)
   //  - The GPS measurement covariance is available in member variable R_GPS
   //  - this is a very simple update
   ////////////////////////////// BEGIN STUDENT CODE ///////////////////////////
-    zFromX(0) = ekfState(0);
-    zFromX(1) = ekfState(1);
-    zFromX(2) = ekfState(2);
-    zFromX(3) = ekfState(3);
-    zFromX(4) = ekfState(4);
-    zFromX(5) = ekfState(5);
+    for (int i=0; i<6; i++){
+        zFromX(i) = ekfState(i);
+    }
     
     for ( int i = 0; i < 6; i++) {
         hPrime(i,i) = 1;
