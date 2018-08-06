@@ -15,7 +15,8 @@ QVelXYStd = .2
 
 QVelZStd = .1
 # QYawStd = .05
-QYawStd = .1
+QYawStd = 0.08
+# QYawStd = .1 --> wrong?
 
 # GPS measurement std deviations
 GPSPosXYStd = 1
