@@ -125,6 +125,17 @@ void QuadEstimatorEKF::UpdateFromIMU(V3F accel, V3F gyro)
     // normalize yaw to -pi .. pi
     if (ekfState(6) > F_PI) ekfState(6) -= 2.f*F_PI;
     if (ekfState(6) < -F_PI) ekfState(6) += 2.f*F_PI;
+    
+    /*
+     You can also directly put it in the quaternion output. Something like this:
+     
+     Quaternion<float> quat = Quaternion<float>::FromEuler123_RPY(rollEst, pitchEst, ekfState(6));
+     quat.IntegrateBodyRate(gyro, dtIMU);
+     
+     float predictedPitch = quat.Pitch();
+     float predictedRoll = quat.Roll();
+     ekfState(6) = quat.Yaw();
+     */
   /////////////////////////////// END STUDENT CODE ////////////////////////////
 
   // CALCULATE UPDATE
